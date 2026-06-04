@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block title %}{{ aluno.nome }} - Biblioteca Escolar{% endblock %}
+{% block content %}
+<div class="mb-6">
+    <a href="{{ url_for('listar_alunos') }}" class="text-gray-500 hover:text-gray-700 text-sm">
+        <i class="fas fa-arrow-left mr-1"></i> Voltar para alunos
+    </a>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2">
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="flex items-start gap-6">
+                <div class="w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center text-white text-2xl flex-shrink-0">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="flex-1">
+                    <h1 class="text-2xl font-bold text-gray-900">{{ aluno.nome }}</h1>
+                    <p class="text-gray-500">{{ aluno.matricula }}</p>
+
+                    <div class="grid grid-cols-2 gap-4 mt-4">
+                        <div>
+                            <p class="text-xs text-gray-500">Série</p>
+                            <p class="font-medium">{{ aluno.serie or '-' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500">Turma</p>
+                            <p class="font-medium">{{ aluno.turma or '-' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500">Email</p>
+                            <p class="font-medium">{{ aluno.email or '-' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500">Telefone</p>
+                            <p class="font-medium">{{ aluno.telefone or '-' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500">Data Nasc.</p>
+                            <p class="font-medium">{{ aluno.data_nascimento.strftime('%d/%m/%Y') if aluno.data_nascimento else '-' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500">Endereço</p>
+                            <p class="font-medium">{{ aluno.endereco or '-' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Histórico de Empréstimos -->
+        <div class="bg-white rounded-xl shadow-sm mt-6">
+            <div class="p-6 border-b flex justify-between items-center">
+                <h2 class="text-lg font-bold text-gray-900">Histórico de Empréstimos</h2>
+                <span class="px-3 py-1 bg-blue-100 text-blue-700 text-xs rounded-md font-medium">
+                    {{ aluno.emprestimos|length }} total
+                </span>
+            </div>
+            <div class="p-6">
+                {% if emprestimos %}
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-gray-600 font-medium">Livro</th>
+                                <th class="px-4 py-3 text-left text-gray-600 font-medium">Data</th>
+                                <th class="px-4 py-3 text-left text-gray-600 font-medium">Prevista</th>
+                                <th class="px-4 py-3 text-left text-gray-600 font-medium">Status</th>
+                                <th class="px-4 py-3 text-left text-gray-600 font-medium">Multa</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y">
+                            {% for emp in emprestimos %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3">{{ emp.livro.titulo }}</td>
+                                <td class="px-4 py-3">{{ emp.data_emprestimo.strftime('%d/%m/%Y') }}</td>
+                                <td class="px-4 py-3">{{ emp.data_devolucao_prevista.strftime('%d/%m/%Y') }}</td>
+                                <td class="px-4 py-3">
+                                    <span class="px-2 py-1 rounded-full text-xs font-medium
+                                        {% if emp.status == 'emprestado' %}bg-green-100 text-green-700
+                                        {% elif emp.status == 'atrasado' %}bg-red-100 text-red-700
+                                        {% else %}bg-gray-100 text-gray-700{% endif %}">
+                                        {{ emp.status.title() }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3">
+                                    {% if emp.multa > 0 %}
+                                    <span class="{% if emp.multa_paga %}text-green-600{% else %}text-red-600 font-medium{% endif %}">
+                                        R$ {{ "%.2f"|format(emp.multa) }}
+                                        {% if emp.multa_paga %}<i class="fas fa-check text-xs ml-1"></i>{% endif %}
+                                    </span>
+                                    {% else %}-{% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-center py-4">Nenhum empréstimo registrado.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 class="font-bold text-gray-900 mb-4">Resumo</h3>
+            <div class="space-y-4">
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Empréstimos Ativos</span>
+                    <span class="font-medium">{{ aluno.emprestimos_ativos() }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Multas Pendentes</span>
+                    <span class="font-medium {% if aluno.total_multas() > 0 %}text-red-600{% endif %}">R$ {{ "%.2f"|format(aluno.total_multas()) }}</span>
+                </div>
+            </div>
+
+            <div class="mt-6 pt-4 border-t">
+                {% if current_user.is_bibliotecario() %}
+                <a href="{{ url_for('editar_aluno', id=aluno.id) }}" class="block w-full text-center py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg mb-2 transition">
+                    <i class="fas fa-edit mr-2"></i>Editar Aluno
+                </a>
+                <form method="POST" action="{{ url_for('excluir_aluno', id=aluno.id) }}" onsubmit="return confirm('Tem certeza?')">
+                    <button type="submit" class="block w-full text-center py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition">
+                        <i class="fas fa-trash mr-2"></i>Excluir Aluno
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

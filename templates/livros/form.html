@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}{{ titulo }} - Biblioteca Escolar{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="mb-6">
+        <a href="{{ url_for('listar_livros') }}" class="text-gray-500 hover:text-gray-700 text-sm">
+            <i class="fas fa-arrow-left mr-1"></i> Voltar para livros
+        </a>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm">
+        <div class="p-6 border-b">
+            <h1 class="text-2xl font-bold text-gray-900">{{ titulo }}</h1>
+        </div>
+        <div class="p-6">
+            <form method="POST">
+                {{ form.hidden_tag() }}
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Título *</label>
+                        {{ form.titulo(class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none") }}
+                        {% if form.titulo.errors %}<p class="text-red-500 text-xs mt-1">{{ form.titulo.errors[0] }}</p>{% endif %}
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Autor *</label>
+                        {{ form.autor(class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none") }}
+                        {% if form.autor.errors %}<p class="text-red-500 text-xs mt-1">{{ form.autor.errors[0] }}</p>{% endif %}
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Editora</label>
+                        {{ form.editora(class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none") }}
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ISBN</label>
+                        {{ form.isbn(class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none") }}
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Ano de Publicação</label>
+                        {{ form.ano_publicacao(class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none") }}
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
+                        {{ form.categoria(class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none") }}
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Quantidade Total *</label>
+                        {{ form.quantidade_total(class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none") }}
+                        {% if form.quantidade_total.errors %}<p class="text-red-500 text-xs mt-1">{{ form.quantidade_total.errors[0] }}</p>{% endif %}
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                    {{ form.descricao(class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none h-32 resize-none") }}
+                </div>
+
+                <div class="flex gap-3">
+                    {{ form.submit(class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition cursor-pointer") }}
+                    <a href="{{ url_for('listar_livros') }}" class="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

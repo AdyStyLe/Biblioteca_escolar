@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}Relatórios - Biblioteca Escolar{% endblock %}
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900">Relatórios e Estatísticas</h1>
+    <p class="text-gray-500">Análise completa da biblioteca</p>
+</div>
+
+<!-- Cards Principais -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500">
+        <p class="text-sm text-gray-500 mb-1">Total de Livros</p>
+        <p class="text-3xl font-bold text-gray-900">{{ total_livros }}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-green-500">
+        <p class="text-sm text-gray-500 mb-1">Total de Alunos</p>
+        <p class="text-3xl font-bold text-gray-900">{{ total_alunos }}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-yellow-500">
+        <p class="text-sm text-gray-500 mb-1">Total de Empréstimos</p>
+        <p class="text-3xl font-bold text-gray-900">{{ total_emprestimos }}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-red-500">
+        <p class="text-sm text-gray-500 mb-1">Multas Pendentes</p>
+        <p class="text-3xl font-bold text-gray-900">R$ {{ "%.2f"|format(multas_pendentes) }}</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- Status dos Empréstimos -->
+    <div class="bg-white rounded-xl shadow-sm p-6">
+        <h2 class="text-lg font-bold text-gray-900 mb-4">Status dos Empréstimos</h2>
+        <div class="space-y-4">
+            <div>
+                <div class="flex justify-between mb-1">
+                    <span class="text-sm text-gray-600">Ativos</span>
+                    <span class="text-sm font-medium">{{ emprestimos_ativos }}</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div class="bg-green-500 h-2 rounded-full" style="width: {{ (emprestimos_ativos / total_emprestimos * 100) if total_emprestimos > 0 else 0 }}%"></div>
+                </div>
+            </div>
+            <div>
+                <div class="flex justify-between mb-1">
+                    <span class="text-sm text-gray-600">Atrasados</span>
+                    <span class="text-sm font-medium">{{ emprestimos_atrasados }}</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div class="bg-red-500 h-2 rounded-full" style="width: {{ (emprestimos_atrasados / total_emprestimos * 100) if total_emprestimos > 0 else 0 }}%"></div>
+                </div>
+            </div>
+            <div>
+                <div class="flex justify-between mb-1">
+                    <span class="text-sm text-gray-600">Devolvidos</span>
+                    <span class="text-sm font-medium">{{ emprestimos_devolvidos }}</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div class="bg-gray-500 h-2 rounded-full" style="width: {{ (emprestimos_devolvidos / total_emprestimos * 100) if total_emprestimos > 0 else 0 }}%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Empréstimos por Mês -->
+    <div class="bg-white rounded-xl shadow-sm p-6">
+        <h2 class="text-lg font-bold text-gray-900 mb-4">Empréstimos por Período</h2>
+        <div class="space-y-3">
+            {% for mes in meses %}
+            <div class="flex items-center gap-3">
+                <span class="text-sm text-gray-600 w-20">{{ mes.mes }}</span>
+                <div class="flex-1 bg-gray-200 rounded-full h-2">
+                    <div class="bg-blue-500 h-2 rounded-full" style="width: {{ (mes.total / (meses|map(attribute='total')|max) * 100) if (meses|map(attribute='total')|max) > 0 else 0 }}%"></div>
+                </div>
+                <span class="text-sm font-medium w-8 text-right">{{ mes.total }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Categorias Populares -->
+    <div class="bg-white rounded-xl shadow-sm p-6">
+        <h2 class="text-lg font-bold text-gray-900 mb-4">Categorias Mais Populares</h2>
+        {% if categorias_populares %}
+        <div class="space-y-3">
+            {% for cat in categorias_populares %}
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600">
+                        <i class="fas fa-tag text-sm"></i>
+                    </div>
+                    <span class="font-medium">{{ cat.categoria }}</span>
+                </div>
+                <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-md font-medium">{{ cat.total }} empréstimos</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-gray-500 text-center py-4">Nenhum dado disponível.</p>
+        {% endif %}
+    </div>
+
+    <!-- Alunos Top -->
+    <div class="bg-white rounded-xl shadow-sm p-6">
+        <h2 class="text-lg font-bold text-gray-900 mb-4">Alunos Mais Ativos</h2>
+        {% if alunos_top %}
+        <div class="space-y-3">
+            {% for aluno in alunos_top %}
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-600 text-xs">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div>
+                        <p class="font-medium text-sm">{{ aluno.nome }}</p>
+                        <p class="text-xs text-gray-500">{{ aluno.matricula }}</p>
+                    </div>
+                </div>
+                <span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-md font-medium">{{ aluno.total }} empréstimos</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-gray-500 text-center py-4">Nenhum dado disponível.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="mt-6">
+    <a href="{{ url_for('relatorio_multas') }}" class="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition">
+        <i class="fas fa-file-invoice-dollar"></i>
+        <span>Ver Relatório de Multas</span>
+    </a>
+</div>
+{% endblock %}

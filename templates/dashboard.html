@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Biblioteca Escolar{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Visão geral do sistema em tempo real{% endblock %}
+{% block content %}
+
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Total Livros -->
+    <div class="card-lift bg-white rounded-2xl p-6 border border-surface-100 shadow-sm animate-fade-in">
+        <div class="flex items-start justify-between">
+            <div>
+                <p class="text-sm font-medium text-surface-500 mb-1">Total de Livros</p>
+                <p class="text-3xl font-bold text-surface-900">{{ total_livros }}</p>
+                <p class="text-xs text-emerald-600 mt-1 font-medium"><i class="fas fa-arrow-trend-up mr-1"></i>Acervo ativo</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white shadow-lg shadow-primary-500/25">
+                <i class="fas fa-book text-lg"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alunos -->
+    <div class="card-lift bg-white rounded-2xl p-6 border border-surface-100 shadow-sm animate-fade-in delay-100">
+        <div class="flex items-start justify-between">
+            <div>
+                <p class="text-sm font-medium text-surface-500 mb-1">Alunos Cadastrados</p>
+                <p class="text-3xl font-bold text-surface-900">{{ total_alunos }}</p>
+                <p class="text-xs text-emerald-600 mt-1 font-medium"><i class="fas fa-users mr-1"></i>Leitores ativos</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-500/25">
+                <i class="fas fa-graduation-cap text-lg"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Empréstimos Ativos -->
+    <div class="card-lift bg-white rounded-2xl p-6 border border-surface-100 shadow-sm animate-fade-in delay-200">
+        <div class="flex items-start justify-between">
+            <div>
+                <p class="text-sm font-medium text-surface-500 mb-1">Empréstimos Ativos</p>
+                <p class="text-3xl font-bold text-surface-900">{{ emprestimos_ativos }}</p>
+                <p class="text-xs text-amber-600 mt-1 font-medium"><i class="fas fa-clock mr-1"></i>Em andamento</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center text-white shadow-lg shadow-amber-500/25">
+                <i class="fas fa-right-left text-lg"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Atrasados -->
+    <div class="card-lift bg-white rounded-2xl p-6 border border-surface-100 shadow-sm animate-fade-in delay-300">
+        <div class="flex items-start justify-between">
+            <div>
+                <p class="text-sm font-medium text-surface-500 mb-1">Empréstimos Atrasados</p>
+                <p class="text-3xl font-bold text-rose-600">{{ emprestimos_atrasados }}</p>
+                <p class="text-xs text-rose-500 mt-1 font-medium"><i class="fas fa-triangle-exclamation mr-1"></i>Requerem atenção</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-500 to-rose-600 flex items-center justify-center text-white shadow-lg shadow-rose-500/25">
+                <i class="fas fa-circle-exclamation text-lg"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <!-- Gráfico de Atividade (SVG) -->
+    <div class="lg:col-span-2 bg-white rounded-2xl border border-surface-100 shadow-sm p-6 animate-fade-in">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h3 class="text-lg font-bold text-surface-900">Atividade de Empréstimos</h3>
+                <p class="text-sm text-surface-500">Últimos 6 períodos</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-primary-500"></span>
+                <span class="text-xs text-surface-500">Empréstimos</span>
+            </div>
+        </div>
+
+        {% if meses %}
+        {% set max_val = meses|map(attribute='total')|max %}
+        {% set max_val = max_val if max_val > 0 else 1 %}
+        <div class="h-48 flex items-end justify-between gap-3 px-2">
+            {% for mes in meses %}
+            {% set height = (mes.total / max_val * 100)|int %}
+            {% set height = height if height > 5 else 5 %}
+            <div class="flex-1 flex flex-col items-center gap-2 group">
+                <div class="relative w-full flex justify-center">
+                    <div class="w-full max-w-[40px] rounded-t-lg bg-gradient-to-t from-primary-600 to-primary-400 transition-all duration-500 group-hover:from-primary-500 group-hover:to-primary-300" style="height: {{ height }}%;"></div>
+                    <div class="absolute -top-8 opacity-0 group-hover:opacity-100 transition-opacity bg-surface-900 text-white text-xs px-2 py-1 rounded-md whitespace-nowrap pointer-events-none">
+                        {{ mes.total }} empréstimos
+                    </div>
+                </div>
+                <span class="text-xs text-surface-500 font-medium">{{ mes.mes }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="h-48 flex items-center justify-center text-surface-400">
+            <p>Sem dados suficientes para o gráfico</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Livros Populares -->
+    <div class="bg-white rounded-2xl border border-surface-100 shadow-sm p-6 animate-fade-in delay-100">
+        <h3 class="text-lg font-bold text-surface-900 mb-1">Livros Populares</h3>
+        <p class="text-sm text-surface-500 mb-5">Mais emprestados</p>
+
+        {% if livros_populares %}
+        <div class="space-y-4">
+            {% for livro in livros_populares %}
+            <div class="flex items-center gap-3 p-3 rounded-xl hover:bg-surface-50 transition group">
+                <div class="w-10 h-14 rounded-lg bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center text-primary-600 flex-shrink-0 shadow-sm">
+                    <i class="fas fa-book text-sm"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-surface-900 truncate group-hover:text-primary-600 transition">{{ livro.titulo }}</p>
+                    <p class="text-xs text-surface-500 truncate">{{ livro.autor }}</p>
+                </div>
+                <div class="text-right">
+                    <span class="text-sm font-bold text-primary-600">{{ livro.total }}</span>
+                    <p class="text-xs text-surface-400">emp.</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-8 text-surface-400">
+            <i class="fas fa-book-open text-3xl mb-2"></i>
+            <p class="text-sm">Nenhum dado ainda</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Últimos Empréstimos -->
+<div class="bg-white rounded-2xl border border-surface-100 shadow-sm overflow-hidden animate-fade-in delay-200">
+    <div class="px-6 py-5 border-b border-surface-100 flex items-center justify-between">
+        <div>
+            <h3 class="text-lg font-bold text-surface-900">Últimos Empréstimos</h3>
+            <p class="text-sm text-surface-500">Registos mais recentes</p>
+        </div>
+        <a href="{{ url_for('listar_emprestimos') }}" class="text-sm font-medium text-primary-600 hover:text-primary-700 transition">
+            Ver todos <i class="fas fa-arrow-right ml-1 text-xs"></i>
+        </a>
+    </div>
+
+    {% if ultimos_emprestimos %}
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-surface-50/50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase tracking-wider">Livro</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase tracking-wider">Aluno</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase tracking-wider">Data</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase tracking-wider">Status</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-surface-100">
+                {% for emp in ultimos_emprestimos %}
+                <tr class="hover:bg-surface-50/50 transition">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-10 rounded bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center text-primary-600 text-xs">
+                                <i class="fas fa-book"></i>
+                            </div>
+                            <span class="font-medium text-surface-900">{{ emp.livro.titulo }}</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-surface-600">{{ emp.aluno.nome }}</td>
+                    <td class="px-6 py-4 text-surface-500">{{ emp.data_emprestimo.strftime('%d/%m/%Y') }}</td>
+                    <td class="px-6 py-4">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold
+                            {% if emp.status == 'emprestado' %}bg-emerald-50 text-emerald-700 border border-emerald-200
+                            {% elif emp.status == 'atrasado' %}bg-rose-50 text-rose-700 border border-rose-200
+                            {% else %}bg-surface-100 text-surface-600 border border-surface-200{% endif %}">
+                            <span class="w-1.5 h-1.5 rounded-full
+                                {% if emp.status == 'emprestado' %}bg-emerald-500
+                                {% elif emp.status == 'atrasado' %}bg-rose-500
+                                {% else %}bg-surface-400{% endif %}"></span>
+                            {{ emp.status.title() }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="p-12 text-center text-surface-400">
+        <div class="w-16 h-16 rounded-full bg-surface-100 flex items-center justify-center mx-auto mb-3">
+            <i class="fas fa-inbox text-2xl text-surface-300"></i>
+        </div>
+        <p class="text-sm">Nenhum empréstimo registado ainda</p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Relatório de Multas - Biblioteca Escolar{% endblock %}
+{% block content %}
+<div class="mb-8 flex justify-between items-center">
+    <div>
+        <h1 class="text-3xl font-bold text-gray-900">Relatório de Multas</h1>
+        <p class="text-gray-500">Controle de multas por atraso</p>
+    </div>
+    <a href="{{ url_for('relatorios') }}" class="text-gray-500 hover:text-gray-700 text-sm">
+        <i class="fas fa-arrow-left mr-1"></i> Voltar
+    </a>
+</div>
+
+<div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+    <div class="flex items-center justify-between">
+        <span class="text-lg font-medium text-gray-700">Total de Multas Pendentes:</span>
+        <span class="text-2xl font-bold text-red-600">R$ {{ "%.2f"|format(total_multas) }}</span>
+    </div>
+</div>
+
+{% if emprestimos %}
+<div class="bg-white rounded-xl shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-4 text-left text-gray-600 font-medium">Aluno</th>
+                    <th class="px-6 py-4 text-left text-gray-600 font-medium">Livro</th>
+                    <th class="px-6 py-4 text-left text-gray-600 font-medium">Dias Atraso</th>
+                    <th class="px-6 py-4 text-left text-gray-600 font-medium">Multa</th>
+                    <th class="px-6 py-4 text-left text-gray-600 font-medium">Status</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y">
+                {% for emp in emprestimos %}
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="px-6 py-4">{{ emp.aluno.nome }}</td>
+                    <td class="px-6 py-4">{{ emp.livro.titulo }}</td>
+                    <td class="px-6 py-4">
+                        {% if emp.data_devolucao_real %}
+                            {{ ((emp.data_devolucao_real - emp.data_devolucao_prevista).days) if emp.data_devolucao_real > emp.data_devolucao_prevista else 0 }} dias
+                        {% else %}
+                            {{ ((datetime.utcnow() - emp.data_devolucao_prevista).days) if datetime.utcnow() > emp.data_devolucao_prevista else 0 }} dias
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 font-medium text-red-600">R$ {{ "%.2f"|format(emp.multa) }}</td>
+                    <td class="px-6 py-4">
+                        {% if emp.multa_paga %}
+                        <span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-md font-medium">Paga</span>
+                        {% else %}
+                        <span class="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-md font-medium">Pendente</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="bg-white rounded-xl shadow-sm p-12 text-center">
+    <i class="fas fa-check-circle text-4xl text-green-300 mb-4"></i>
+    <p class="text-gray-500 text-lg">Nenhuma multa registrada.</p>
+</div>
+{% endif %}
+{% endblock %}

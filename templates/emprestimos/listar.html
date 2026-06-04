@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %}Empréstimos - Biblioteca Escolar{% endblock %}
+{% block content %}
+<div class="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div>
+        <h1 class="text-3xl font-bold text-gray-900">Empréstimos</h1>
+        <p class="text-gray-500">Controle de empréstimos e devoluções</p>
+    </div>
+    {% if current_user.is_bibliotecario() %}
+    <a href="{{ url_for('novo_emprestimo') }}" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
+        <i class="fas fa-plus"></i>
+        <span>Novo Empréstimo</span>
+    </a>
+    {% endif %}
+</div>
+
+<!-- Filtros -->
+<div class="bg-white rounded-xl shadow-sm p-4 mb-6">
+    <form method="GET" action="{{ url_for('listar_emprestimos') }}" class="flex flex-col md:flex-row gap-4">
+        <div class="flex-1">
+            <input type="text" name="busca" value="{{ busca }}" placeholder="Buscar por livro ou aluno..." 
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+        </div>
+        <div class="md:w-48">
+            <select name="status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                <option value="">Todos os status</option>
+                <option value="emprestado" {% if status == 'emprestado' %}selected{% endif %}>Emprestado</option>
+                <option value="atrasado" {% if status == 'atrasado' %}selected{% endif %}>Atrasado</option>
+                <option value="devolvido" {% if status == 'devolvido' %}selected{% endif %}>Devolvido</option>
+            </select>
+        </div>
+        <button type="submit" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition">
+            <i class="fas fa-search"></i> Filtrar
+        </button>
+        {% if busca or status %}
+        <a href="{{ url_for('listar_emprestimos') }}" class="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition">
+            <i class="fas fa-times"></i> Limpar
+        </a>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Tabela de Empréstimos -->
+{% if emprestimos.items %}
+<div class="bg-white rounded-xl shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-4 text-left text-gray-600 font-medium">Livro</th>
+                    <th class="px-6 py-4 text-left text-gray-600 font-medium">Aluno</th>
+                    <th class="px-6 py-4 text-left text-gray-600 font-medium">Data Empréstimo</th>
+                    <th class="px-6 py-4 text-left text-gray-600 font-medium">Devolução Prevista</th>
+                    <th class="px-6 py-4 text-left text-gray-600 font-medium">Status</th>
+                    <th class="px-6 py-4 text-left text-gray-600 font-medium">Multa</th>
+                    <th class="px-6 py-4 text-left text-gray-600 font-medium">Ações</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y">
+                {% for emp in emprestimos.items %}
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-10 bg-blue-100 rounded flex items-center justify-center text-blue-600 text-xs">
+                                <i class="fas fa-book"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-900">{{ emp.livro.titulo }}</p>
+                                <p class="text-xs text-gray-500">{{ emp.livro.autor }}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <p class="font-medium text-gray-900">{{ emp.aluno.nome }}</p>
+                        <p class="text-xs text-gray-500">{{ emp.aluno.matricula }}</p>
+                    </td>
+                    <td class="px-6 py-4">{{ emp.data_emprestimo.strftime('%d/%m/%Y') }}</td>
+                    <td class="px-6 py-4">
+                        <span class="{% if emp.status == 'atrasado' %}text-red-600 font-medium{% endif %}">
+                            {{ emp.data_devolucao_prevista.strftime('%d/%m/%Y') }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-1 rounded-full text-xs font-medium
+                            {% if emp.status == 'emprestado' %}bg-green-100 text-green-700
+                            {% elif emp.status == 'atrasado' %}bg-red-100 text-red-700
+                            {% else %}bg-gray-100 text-gray-700{% endif %}">
+                            {{ emp.status.title() }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        {% if emp.multa > 0 %}
+                        <span class="{% if emp.multa_paga %}text-green-600{% else %}text-red-600 font-medium{% endif %}">
+                            R$ {{ "%.2f"|format(emp.multa) }}
+                        </span>
+                        {% else %}-{% endif %}
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex gap-2">
+                            {% if emp.status in ['emprestado', 'atrasado'] %}
+                            <a href="{{ url_for('devolver_emprestimo', id=emp.id) }}" class="px-3 py-1 bg-green-100 hover:bg-green-200 text-green-700 rounded text-xs transition" title="Devolver">
+                                <i class="fas fa-undo"></i> Devolver
+                            </a>
+                            <form method="POST" action="{{ url_for('renovar_emprestimo', id=emp.id) }}" class="inline">
+                                <button type="submit" class="px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded text-xs transition" title="Renovar">
+                                    <i class="fas fa-redo"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if emprestimos.has_prev or emprestimos.has_next %}
+<div class="mt-6 flex justify-center gap-2">
+    {% if emprestimos.has_prev %}
+    <a href="{{ url_for('listar_emprestimos', page=emprestimos.prev_num, busca=busca, status=status) }}" class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700">
+        <i class="fas fa-chevron-left"></i> Anterior
+    </a>
+    {% endif %}
+    <span class="px-4 py-2 bg-blue-600 text-white rounded-lg">{{ emprestimos.page }}</span>
+    {% if emprestimos.has_next %}
+    <a href="{{ url_for('listar_emprestimos', page=emprestimos.next_num, busca=busca, status=status) }}" class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700">
+        Próxima <i class="fas fa-chevron-right"></i>
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="bg-white rounded-xl shadow-sm p-12 text-center">
+    <i class="fas fa-exchange-alt text-4xl text-gray-300 mb-4"></i>
+    <p class="text-gray-500 text-lg">Nenhum empréstimo encontrado.</p>
+    {% if current_user.is_bibliotecario() %}
+    <a href="{{ url_for('novo_emprestimo') }}" class="inline-block mt-4 text-blue-600 hover:text-blue-700 font-medium">
+        Registrar primeiro empréstimo
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

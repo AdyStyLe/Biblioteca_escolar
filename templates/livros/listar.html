@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Livros - Biblioteca Escolar{% endblock %}
+{% block content %}
+<div class="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div>
+        <h1 class="text-3xl font-bold text-gray-900">Livros</h1>
+        <p class="text-gray-500">Gerencie o acervo da biblioteca</p>
+    </div>
+    {% if current_user.is_bibliotecario() %}
+    <a href="{{ url_for('novo_livro') }}" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
+        <i class="fas fa-plus"></i>
+        <span>Novo Livro</span>
+    </a>
+    {% endif %}
+</div>
+
+<!-- Filtros -->
+<div class="bg-white rounded-xl shadow-sm p-4 mb-6">
+    <form method="GET" action="{{ url_for('listar_livros') }}" class="flex flex-col md:flex-row gap-4">
+        <div class="flex-1">
+            <input type="text" name="busca" value="{{ busca }}" placeholder="Buscar por título, autor ou ISBN..." 
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+        </div>
+        <div class="md:w-48">
+            <select name="categoria" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                <option value="">Todas as categorias</option>
+                {% for cat in categorias %}
+                <option value="{{ cat[0] }}" {% if categoria == cat[0] %}selected{% endif %}>{{ cat[0] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition">
+            <i class="fas fa-search"></i> Filtrar
+        </button>
+        {% if busca or categoria %}
+        <a href="{{ url_for('listar_livros') }}" class="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition">
+            <i class="fas fa-times"></i> Limpar
+        </a>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Grid de Livros -->
+{% if livros.items %}
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    {% for livro in livros.items %}
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden card-hover">
+        <div class="h-32 bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center">
+            <i class="fas fa-book text-4xl text-white/80"></i>
+        </div>
+        <div class="p-5">
+            <div class="flex items-center justify-between mb-2">
+                <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-md">{{ livro.categoria or 'Sem categoria' }}</span>
+                <span class="text-xs text-gray-500">{{ livro.ano_publicacao or '' }}</span>
+            </div>
+            <h3 class="font-bold text-gray-900 mb-1 line-clamp-2" title="{{ livro.titulo }}">{{ livro.titulo }}</h3>
+            <p class="text-sm text-gray-500 mb-3">{{ livro.autor }}</p>
+
+            <div class="flex items-center justify-between text-sm">
+                <span class="{% if livro.quantidade_disponivel > 0 %}text-green-600{% else %}text-red-600{% endif %} font-medium">
+                    <i class="fas fa-circle text-xs mr-1"></i>
+                    {{ livro.quantidade_disponivel }} / {{ livro.quantidade_total }} disp.
+                </span>
+            </div>
+
+            <div class="mt-4 flex gap-2">
+                <a href="{{ url_for('detalhes_livro', id=livro.id) }}" class="flex-1 text-center py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm transition">
+                    Detalhes
+                </a>
+                {% if current_user.is_bibliotecario() %}
+                <a href="{{ url_for('editar_livro', id=livro.id) }}" class="px-3 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg text-sm transition">
+                    <i class="fas fa-edit"></i>
+                </a>
+                <form method="POST" action="{{ url_for('excluir_livro', id=livro.id) }}" class="inline" onsubmit="return confirm('Tem certeza que deseja excluir este livro?')">
+                    <button type="submit" class="px-3 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-sm transition">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Paginação -->
+{% if livros.has_prev or livros.has_next %}
+<div class="mt-8 flex justify-center gap-2">
+    {% if livros.has_prev %}
+    <a href="{{ url_for('listar_livros', page=livros.prev_num, busca=busca, categoria=categoria) }}" class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700">
+        <i class="fas fa-chevron-left"></i> Anterior
+    </a>
+    {% endif %}
+    <span class="px-4 py-2 bg-blue-600 text-white rounded-lg">{{ livros.page }}</span>
+    {% if livros.has_next %}
+    <a href="{{ url_for('listar_livros', page=livros.next_num, busca=busca, categoria=categoria) }}" class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700">
+        Próxima <i class="fas fa-chevron-right"></i>
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="bg-white rounded-xl shadow-sm p-12 text-center">
+    <i class="fas fa-book text-4xl text-gray-300 mb-4"></i>
+    <p class="text-gray-500 text-lg">Nenhum livro encontrado.</p>
+    {% if current_user.is_bibliotecario() %}
+    <a href="{{ url_for('novo_livro') }}" class="inline-block mt-4 text-blue-600 hover:text-blue-700 font-medium">
+        Cadastrar primeiro livro
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
